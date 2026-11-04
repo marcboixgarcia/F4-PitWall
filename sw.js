@@ -1,5 +1,5 @@
-// F4 Pit Wall offline cache · build f2b290a070
-const CACHE = 'pitwall-f2b290a070';
+// F4 Pit Wall offline cache · build 943cf8314a
+const CACHE = 'pitwall-943cf8314a';
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./apple-touch-icon.png", "./icon-192.png", "./icon-512.png", "./favicon-64.png"];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {
@@ -11,8 +11,20 @@ self.addEventListener('fetch', e => {
   const isFont = /fonts\.(googleapis|gstatic)\.com$/.test(url.hostname);
   if (url.origin !== location.origin && !isFont) return;
   if (url.pathname.endsWith('/auth.json')) return;   // sign-in list: always from the server
+  // the app page itself: newest from the server when there is signal (no browser cache, 4 s limit), the saved copy offline
+  if (req.mode === 'navigate' || url.pathname.endsWith('/index.html') || url.pathname.endsWith('/')) {
+    e.respondWith(caches.open(CACHE).then(async cache => {
+      const ctrl = new AbortController(); const timer = setTimeout(() => ctrl.abort(), 4000);
+      try {
+        const res = await fetch(req.url.split('#')[0], { cache: 'no-store', signal: ctrl.signal }); clearTimeout(timer);
+        if (res && res.ok) { cache.put('./index.html', res.clone()); return res; }
+      } catch (_) { clearTimeout(timer); }
+      return (await cache.match('./index.html')) || new Response('Offline and not cached yet. Open the app once with signal.', { status: 503, headers: { 'Content-Type': 'text/plain' } });
+    }));
+    return;
+  }
   e.respondWith(caches.open(CACHE).then(async cache => {
-    const key = req.mode === 'navigate' ? './index.html' : req;
+    const key = req;
     const hit = await cache.match(key, { ignoreSearch: true });
     const net = fetch(req).then(res => { if (res && (res.ok || res.type === 'opaque')) cache.put(key, res.clone()); return res; }).catch(() => null);
     if (hit) { e.waitUntil(net); return hit; }
