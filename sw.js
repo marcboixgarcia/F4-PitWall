@@ -1,5 +1,5 @@
-// F4 Pit Wall offline cache · build 5b7cb67a0f
-const CACHE = 'pitwall-5b7cb67a0f';
+// F4 Pit Wall offline cache · build de2dfcb029
+const CACHE = 'pitwall-de2dfcb029';
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./apple-touch-icon.png", "./icon-192.png", "./icon-512.png", "./favicon-64.png"];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {
@@ -10,6 +10,7 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   const isFont = /fonts\.(googleapis|gstatic)\.com$/.test(url.hostname);
   if (url.origin !== location.origin && !isFont) return;
+  if (url.pathname.endsWith('/auth.json')) return;   // sign-in list: always from the server
   e.respondWith(caches.open(CACHE).then(async cache => {
     const key = req.mode === 'navigate' ? './index.html' : req;
     const hit = await cache.match(key, { ignoreSearch: true });
