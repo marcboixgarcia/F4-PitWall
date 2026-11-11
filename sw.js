@@ -1,5 +1,5 @@
-// F4 Pit Wall offline cache · build 027e8a66e3
-const CACHE = 'pitwall-027e8a66e3';
+// F4 Pit Wall offline cache · build 3719714e32
+const CACHE = 'pitwall-3719714e32';
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./apple-touch-icon.png", "./icon-192.png", "./icon-512.png", "./favicon-64.png"];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {
